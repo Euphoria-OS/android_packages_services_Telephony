@@ -13,8 +13,7 @@ import com.android.internal.telephony.PhoneFactory;
 
 import java.util.ArrayList;
 
-public class GsmUmtsAdditionalCallOptions extends
-        TimeConsumingPreferenceActivity {
+public class GsmUmtsAdditionalCallOptions extends TimeConsumingPreferenceActivity {
     private static final String LOG_TAG = "GsmUmtsAdditionalCallOptions";
     private final boolean DBG = (PhoneGlobals.DBG_LEVEL >= 2);
 
@@ -27,13 +26,20 @@ public class GsmUmtsAdditionalCallOptions extends
     private MSISDNEditPreference mMSISDNButton;
 
     private final ArrayList<Preference> mPreferences = new ArrayList<Preference>();
-    private int mInitIndex= 0;
+    private int mInitIndex = 0;
+    private Phone mPhone;
+    private SubscriptionInfoHelper mSubscriptionInfoHelper;
 
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
 
         addPreferencesFromResource(R.xml.gsm_umts_additional_options);
+
+        mSubscriptionInfoHelper = new SubscriptionInfoHelper(this, getIntent());
+        mSubscriptionInfoHelper.setActionBarTitle(
+                getActionBar(), getResources(), R.string.additional_gsm_call_settings_with_label);
+        mPhone = mSubscriptionInfoHelper.getPhone();
 
         PreferenceScreen prefSet = getPreferenceScreen();
         mCLIRButton = (CLIRListPreference) prefSet.findPreference(BUTTON_CLIR_KEY);
@@ -46,12 +52,12 @@ public class GsmUmtsAdditionalCallOptions extends
 
         if (icicle == null) {
             if (DBG) Log.d(LOG_TAG, "start to init ");
-            mCLIRButton.init(this, false);
+            mCLIRButton.init(this, false, mPhone);
         } else {
             if (DBG) Log.d(LOG_TAG, "restore stored states");
             mInitIndex = mPreferences.size();
-            mCLIRButton.init(this, true);
-            mCWButton.init(this, true);
+            mCLIRButton.init(this, true, mPhone);
+            mCWButton.init(this, true, mPhone);
             mMSISDNButton.init(this, true);
             int[] clirArray = icicle.getIntArray(mCLIRButton.getKey());
             if (clirArray != null) {
@@ -59,7 +65,7 @@ public class GsmUmtsAdditionalCallOptions extends
                         + clirArray[0] + ", clirArray[1]=" + clirArray[1]);
                 mCLIRButton.handleGetCLIRResult(clirArray);
             } else {
-                mCLIRButton.init(this, false);
+                mCLIRButton.init(this, false, mPhone);
             }
         }
 
@@ -85,7 +91,7 @@ public class GsmUmtsAdditionalCallOptions extends
             mInitIndex++;
             Preference pref = mPreferences.get(mInitIndex);
             if (pref instanceof CallWaitingCheckBoxPreference) {
-                ((CallWaitingCheckBoxPreference) pref).init(this, false);
+                ((CallWaitingCheckBoxPreference) pref).init(this, false, mPhone);
             } else if (pref instanceof MSISDNEditPreference) {
                 ((MSISDNEditPreference) pref).init(this, false);
             }
@@ -97,7 +103,7 @@ public class GsmUmtsAdditionalCallOptions extends
     public boolean onOptionsItemSelected(MenuItem item) {
         final int itemId = item.getItemId();
         if (itemId == android.R.id.home) {  // See ActionBar#setDisplayHomeAsUpEnabled()
-            CallFeaturesSetting.goUpToTopLevelSetting(this);
+            CallFeaturesSetting.goUpToTopLevelSetting(this, mSubscriptionInfoHelper);
             return true;
         }
         return super.onOptionsItemSelected(item);
