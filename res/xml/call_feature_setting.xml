@@ -92,7 +92,7 @@
 
     </PreferenceScreen>
 
-    <CheckBoxPreference
+     <SwitchPreference
         android:key="button_enable_video_calling"
         android:title="@string/enable_video_calling_title"
         android:persistent="true"
