@@ -37,6 +37,7 @@ import android.preference.CheckBoxPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.provider.ContactsContract.CommonDataKinds;
@@ -167,6 +168,7 @@ public class CallFeaturesSetting extends PreferenceActivity
     private static final String BUTTON_CDMA_OPTIONS = "button_cdma_more_expand_key";
     private static final String CALL_FORWARDING_KEY = "call_forwarding_key";
     private static final String ADDITIONAL_GSM_SETTINGS_KEY = "additional_gsm_call_settings_key";
+    private static final String CATEGORY_ADVANCED = "pref_advanced_settings";
 
     private static final String PHONE_ACCOUNT_SETTINGS_KEY =
             "phone_account_settings_preference_screen";
@@ -1160,8 +1162,6 @@ public class CallFeaturesSetting extends PreferenceActivity
         super.onCreate(icicle);
         if (DBG) log("onCreate: Intent is " + getIntent());
 
-        PreferenceScreen preferenceScreen = getPreferenceScreen();
-
         // Make sure we are running as the primary user.
         if (UserHandle.myUserId() != UserHandle.USER_OWNER) {
             Toast.makeText(this, R.string.call_settings_primary_user_only,
@@ -1185,12 +1185,7 @@ public class CallFeaturesSetting extends PreferenceActivity
         mPhone = mSubscriptionInfoHelper.getPhone();
 
         if (mButtonProximity != null) {
-            if (getResources().getBoolean(R.bool.config_proximity_enable)) {
-                mButtonProximity.setOnPreferenceChangeListener(this);
-            } else {
-                getPreferenceScreen().removePreference(mButtonProximity);
-                mButtonProximity = null;
-            }
+            mButtonProximity.setOnPreferenceChangeListener(this);
         }
     }
 
@@ -1404,12 +1399,19 @@ public class CallFeaturesSetting extends PreferenceActivity
             wifiCallingSettings.setSummary(resId);
         }
 
+        PreferenceCategory advancedPrefs = (PreferenceCategory)
+                findPreference(CATEGORY_ADVANCED);
         if (mButtonProximity != null) {
-            boolean checked = Settings.System.getInt(getContentResolver(),
-                    Settings.System.IN_CALL_PROXIMITY_SENSOR, 1) == 1;
-            mButtonProximity.setChecked(checked);
-            mButtonProximity.setSummary(checked ? R.string.proximity_on_summary
-                    : R.string.proximity_off_summary);
+            if (!getResources().getBoolean(R.bool.config_proximity_enable)) {
+                advancedPrefs.removePreference(mButtonProximity);
+                mButtonProximity = null;
+            } else {
+                boolean checked = Settings.System.getInt(getContentResolver(),
+                        Settings.System.IN_CALL_PROXIMITY_SENSOR, 1) == 1;
+                mButtonProximity.setChecked(checked);
+                mButtonProximity.setSummary(checked ? R.string.proximity_on_summary
+                        : R.string.proximity_off_summary);
+            }
         }
     }
 
